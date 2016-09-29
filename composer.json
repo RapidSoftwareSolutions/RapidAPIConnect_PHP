@@ -1,0 +1,7 @@
+{
+    "name": "RapidApi/rapidapi-connect",
+    "description": "Connect to blocks on the rapidapi.com marketplace",
+    "require": {
+        "php": "^5.3.3 || ^7.0"
+    }
+}

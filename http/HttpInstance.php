@@ -27,18 +27,33 @@ class HttpInstance
         $this->curlInstance = curl_init($url);
     }
 
+    /**
+     * set Curl options
+     *
+     * @param $project
+     * @param $key
+     * @param $args
+     */
     public function setParameters($project, $key, $args)
     {
         curl_setopt($this->curlInstance, CURLOPT_HTTPHEADER, [
-            'Content-Type:application/json',
+            'User-Agent RapidAPIConnect_PHP',
+            'Content-Type: multipart/form-data',
             'Authorization: Basic ' . base64_encode($project . ":" . $key)
             ]);
+
+        curl_setopt($this->curlInstance, CURLOPT_POST, true);
 
         curl_setopt($this->curlInstance, CURLOPT_POSTFIELDS, $args);
 
         curl_setopt($this->curlInstance, CURLOPT_RETURNTRANSFER, true);
     }
 
+    /**
+     * response from API
+     *
+     * @return mixed|string
+     */
     public function getResponse()
     {
         $this->response = curl_exec($this->curlInstance);
@@ -62,6 +77,11 @@ class HttpInstance
         return $this->response;
     }
 
+    /**
+     * HTTP CODE from last request
+     *
+     * @return int
+     */
     public function getLastHttpCode()
     {
         return $this->httpCode;

@@ -1,6 +1,8 @@
 <?php
 namespace RapidApi;
 
+require_once('http/HttpInstance.php');
+
 use RapidApi\http\HttpInstance;
 
 class RapidApi
@@ -73,9 +75,10 @@ class RapidApi
 
         } catch (\RuntimeException $ex) {
 
-            die(sprintf('Http error %s with code %d', $ex->getMessage(), $ex->getCode()));
-        }
+            $callback['error'] = sprintf('Http error %s with code %d', $ex->getMessage(), $ex->getCode());
 
+            return $callback;
+        }
     }
 
 }

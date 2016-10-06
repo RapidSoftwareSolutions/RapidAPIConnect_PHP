@@ -11,13 +11,15 @@ First of all, download the sdk by composer:
 
     composer require rapidapi/rapidapi-connect
 
-Then, require composer autoload in your code:
+Then, require composer autoload and use package in your code:
 
     require __DIR__ . '/vendor/autoload.php';
+    
+    use RapidApi\RapidApiConnect;
 
 Once required, the last step is to initialize the SDK with your project name and project API Key:
 
-    $rapid = new RapidApi('PROJECT_NAME', 'API_KEY');
+    $rapid = new RapidApiConnect('PROJECT_NAME', 'API_KEY');
 
 That's all, your SDK is set up! You can now use any block by copying the code snippet from the marketplace.
 

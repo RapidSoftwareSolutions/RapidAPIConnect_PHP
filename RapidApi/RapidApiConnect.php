@@ -4,7 +4,7 @@ namespace RapidApi;
 
 use RapidApi\Utils\HttpInstance;
 
-class RapidApi
+class RapidApiConnect
 {
     /**
      * Creates a new RapidAPI Connect instance

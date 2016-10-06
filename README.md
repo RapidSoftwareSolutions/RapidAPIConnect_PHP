@@ -7,13 +7,13 @@ This SDK allows you to connect to RapidAPI blocks from your php app. To start of
 
 ##Set-up:
 
-First of all, download the sdk manually or by composer (in future) :
+First of all, download the sdk by composer:
 
-    composer require rapidapi-connect
+    composer require rapidapi/rapidapi-connect
 
-Then, require the package in your code (if composer not used):
+Then, require composer autoload in your code:
 
-    require_once('RapidApi.php');
+    require __DIR__ . '/vendor/autoload.php';
 
 Once required, the last step is to initialize the SDK with your project name and project API Key:
 
@@ -49,7 +49,7 @@ The following code will call the block MicrosoftComputerVision.analyzeImage with
 ```
 
 ###Read Stream
-If the file is locally stored, you can read it using `fs` and pass the read stream to the block, like the following:
+If the file is locally stored, you can read it using `CURLFile` and pass the read stream to the block, like the following:
 ```
     $image = new CURLFile('/YOUR_PATH_HERE/maxresdefault.jpg');
     

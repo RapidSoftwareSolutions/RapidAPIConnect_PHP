@@ -25,15 +25,16 @@ That's all, your SDK is set up! You can now use any block by copying the code sn
 
 ##Usage:
 
-To use any block in the marketplace, just copy it's code snippet and paste it in your code. For example, the following is the snippet fot the **Delivery.sendSMS** block:
+To use any block in the marketplace, just copy it's code snippet and paste it in your code. For example, the following will call the **Calculate.add** block, and print the result:
 
-    $rapid->call('Delivery', 'sendSMS', ['message' => 'Hello, connect!', 'to' => '4158496404']);
+    print_r($rapid->call('Calculate', 'add', ['num1' => 11, 'num2' => 2]));
 
-The following will call the **Calculate.add** block, and print the result:
+The printed result will be:
 
-    $rapid->call('Calculate', 'add', ['num1' => 11, 'num2' => 2]);
-
-The printed result will be `13`.
+    Array
+    (
+        [success] => 13
+    )
 
 **Notice** that the `error` event will also be called if you make an invalid block call (for example - the package you refer to does not exist).
 
@@ -44,7 +45,7 @@ Whenever a block in RapidAPI requires a file, you can either pass a URL to the f
 The following code will call the block MicrosoftComputerVision.analyzeImage with a URL of an image:
 
 ```
-    $rapid->call('MicrosoftComputerVision', 'analyzeImage', 
+    $response = $rapid->call('MicrosoftComputerVision', 'analyzeImage', 
     ['subscriptionKey' => '############################', 'image' => 'https://i.ytimg.com/vi/tntOCGkgt98/maxresdefault.jpg']
     );
 
@@ -55,11 +56,18 @@ If the file is locally stored, you can read it using `CURLFile` and pass the rea
 ```
     $image = new CURLFile('/YOUR_PATH_HERE/maxresdefault.jpg');
     
-    $rapid->call('MicrosoftComputerVision', 'analyzeImage', 
+    $response = $rapid->call('MicrosoftComputerVision', 'analyzeImage', 
     ['subscriptionKey' => '############################', 'image' => $image]
     );
 ```
 
+The printed result of `print_r($response)` will be:
+
+    Array
+    (
+        [success] => {"categories":[{"name":"animal_cat","score":0.99609375}],"requestId":"6f7a1129-d6ff-4975-8725-d3593fc526c7","metadata":{"width":1600,"height":1200,"format":"Jpeg"}}
+    )
+    
 RapidAPI uses the [form-data](https://github.com/form-data/form-data) library by [@felixge](https://github.com/felixge) to handle files, so please refer to it for more information.
 
 ##Issues:

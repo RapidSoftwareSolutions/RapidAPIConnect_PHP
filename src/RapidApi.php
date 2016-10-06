@@ -1,9 +1,8 @@
 <?php
+
 namespace RapidApi;
 
-require_once('http/HttpInstance.php');
-
-use RapidApi\http\HttpInstance;
+use RapidApi\Utils\HttpInstance;
 
 class RapidApi
 {

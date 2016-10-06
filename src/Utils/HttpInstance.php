@@ -1,6 +1,6 @@
 <?php
 
-namespace RapidApi\http;
+namespace RapidApi\Utils;
 
 class HttpInstance
 {
@@ -40,7 +40,7 @@ class HttpInstance
             'User-Agent RapidAPIConnect_PHP',
             'Content-Type: multipart/form-data',
             'Authorization: Basic ' . base64_encode($project . ":" . $key)
-            ]);
+        ]);
 
         curl_setopt($this->curlInstance, CURLOPT_POST, true);
 

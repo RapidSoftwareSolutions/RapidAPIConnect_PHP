@@ -4,7 +4,7 @@
     "require": {
         "php": "^5.3.3 || ^7.0"
     },
-    "license": "mit",
+    "license": "MIT",
     "authors": [
         {
             "name": "Dmitry Shumytskyi",
@@ -13,7 +13,7 @@
     ],
     "autoload": {
         "psr-0": {
-            "RapidApi\\": "RapidApi/"
+            "RapidApi\\": "src/"
         }
     }
 }

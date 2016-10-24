@@ -60,14 +60,14 @@ class RapidApiConnect
 
             $response = json_decode($httpInstance->getResponse(), true);
 
-            if ($httpInstance->getLastHttpCode() != 200 || !isset($response['outcome'])) {
+            if ($httpInstance->getLastHttpCode() != 200 || !isset($response['outcome']) || $response['outcome'] == "error") {
 
                 $callback['error'] = $response;
 
                 return $callback;
             } else {
 
-                $callback[$response['outcome']] = $response['payload'];
+                $callback['success'] = $response['payload'];
 
                 return $callback;
             }

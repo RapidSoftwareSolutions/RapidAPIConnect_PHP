@@ -50,6 +50,22 @@ class HttpInstance
     }
 
     /**
+     * set Curl options for GET requests
+     *
+     * @param $project
+     * @param $key
+     */
+    public function setGetParameters($project, $key)
+    {
+        curl_setopt($this->curlInstance, CURLOPT_HTTPHEADER, [
+            'User-Agent RapidAPIConnect_PHP',
+            'Content-Type: application/json',
+            'Authorization: Basic ' . base64_encode($project . ":" . $key)
+        ]);
+        curl_setopt($this->curlInstance, CURLOPT_RETURNTRANSFER, true);
+    }
+    
+    /**
      * response from API
      *
      * @return mixed|string

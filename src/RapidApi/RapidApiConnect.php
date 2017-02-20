@@ -2,7 +2,7 @@
 
 namespace RapidApi;
 
-require __DIR__ . '/../../vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 use RapidApi\Utils\HttpInstance;
 use WebSocket\Client;

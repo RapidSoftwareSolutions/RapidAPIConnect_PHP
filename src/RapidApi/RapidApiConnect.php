@@ -2,7 +2,11 @@
 
 namespace RapidApi;
 
+require __DIR__ . '/../../vendor/autoload.php';
+
 use RapidApi\Utils\HttpInstance;
+use WebSocket\Client;
+use WebSocket\ConnectionException;
 
 class RapidApiConnect
 {
@@ -39,7 +43,17 @@ class RapidApiConnect
     {
         return static::getBaseUrl() . '/' . $pack . '/' . $block;
     }
+    
+    public static function callbackBaseURL()
+    {
+        return "https://webhooks.imrapid.io";
+    }
 
+    public static function websocketBaseURL()
+    {
+        return "wss://webhooks.imrapid.io";
+    }
+  
     /**
      * Call a block
      *
@@ -77,6 +91,63 @@ class RapidApiConnect
             $callback['error'] = sprintf('Http error %s with code %d', $ex->getMessage(), $ex->getCode());
 
             return $callback;
+        }
+    }
+
+    public function listen($pack, $event, $args, $callbacks)
+    {
+        $user_id = "$pack.$event" . "_$this->project:$this->key";
+        $get_token_url = static::callbackBaseURL() . "/api/get_token?user_id=$user_id";
+        $httpInstance = new HttpInstance($get_token_url);
+        $httpInstance->setGetParameters($this->project, $this->key);
+        try {
+            $response = json_decode($httpInstance->getResponse(), true);
+            $token = $response['token'];
+            $socket_url = static::websocketBaseURL() . "/socket/websocket?token=$token";
+            $client = new Client($socket_url);
+            $connect = array(
+                "topic" => "users_socket:$user_id",
+                "event" => "phx_join",
+                "ref" => "1"
+            );
+            $connect["payload"] = $args;
+            $heartbeat = array(
+                "topic" => "phoenix",
+                "event" => "heartbeat",
+                "ref" => "1"
+            );
+            $heartbeat["payload"] = array();
+            $client->send(json_encode($connect));
+            $echo_time = time();
+            $interval = 30;
+            try {
+                while (1)
+                {
+                    $message = json_decode($client->receive(), true);
+                    if ($message["event"] == "joined" && is_callable($callbacks['onJoin'])) {
+                        call_user_func($callbacks['onJoin']);
+                    }                    
+                    if (substr($message["event"], 0, 4) != "phx_" && $message["payload"]["token"] == $token)
+                    {
+                        if (is_callable($callbacks['onMessage'])) {
+                            call_user_func($callbacks['onMessage'], $message["payload"]["body"]);
+                        }
+                    }
+
+                    if ($echo_time + $interval >= time())
+                    {
+                        $client->send(json_encode($heartbeat, JSON_FORCE_OBJECT));
+                        $echo_time = time();
+                    }
+                }
+            } catch (ConnectionException $e) {
+                if (is_callable($callbacks['onClose'])) {
+                    call_user_func($callbacks['onClose'], $e);
+                }
+                exit;
+            }
+        } catch (\RuntimeException $ex) {
+            return $ex;
         }
     }
 

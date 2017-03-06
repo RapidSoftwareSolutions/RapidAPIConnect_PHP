@@ -133,7 +133,11 @@ class RapidApiConnect
                             call_user_func($callbacks['onMessage'], $message["payload"]["body"]);
                         }
                     }
-
+                    if (!$message["payload"]["token"]) {
+                        if (is_callable($callbacks['onError'])) {
+                            call_user_func($callbacks['onError'], $message["payload"]["body"]);
+                        }
+                    }
                     if ($echo_time + $interval >= time())
                     {
                         $client->send(json_encode($heartbeat, JSON_FORCE_OBJECT));
@@ -147,6 +151,9 @@ class RapidApiConnect
                 exit;
             }
         } catch (\RuntimeException $ex) {
+            if (is_callable($callbacks['onError'])) {
+                call_user_func($callbacks['onError'], $e);
+            }
             return $ex;
         }
     }

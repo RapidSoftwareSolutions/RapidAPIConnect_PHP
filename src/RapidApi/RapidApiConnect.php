@@ -44,12 +44,14 @@ class RapidApiConnect
     
     public static function callbackBaseURL()
     {
-        return "https://webhooks.imrapid.io";
+        //return "https://webhooks.imrapid.io";
+        return "https://webhooks.rapidapi.xyz";
     }
 
     public static function websocketBaseURL()
     {
-        return "wss://webhooks.imrapid.io";
+        //return "wss://webhooks.imrapid.io";
+        return "wss://webhooks.rapidapi.xyz";
     }
   
     /**

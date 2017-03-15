@@ -3,11 +3,28 @@
 namespace RapidApi;
 
 use RapidApi\Utils\HttpInstance;
-use WebSocket\Client;
-use WebSocket\ConnectionException;
+use Ratchet\Client\Connector;
+use Ratchet\Client\WebSocket;
+use Ratchet\RFC6455\Messaging\MessageInterface;
+use React\EventLoop\LoopInterface;
+use React\Promise\Deferred;
 
 class RapidApiConnect
 {
+    /**
+     * $pack {Package}
+     *
+     * @var String
+     */
+    private $pack;
+
+    /**
+     * $event {Webhook event}
+     *
+     * @var String
+     */
+    private $event;
+
     /**
      * Creates a new RapidAPI Connect instance
      *
@@ -31,6 +48,26 @@ class RapidApiConnect
     }
 
     /**
+     * Returns the base URL to obtain token for webhook calls
+     *
+     * @return string
+     */
+    public static function callbackBaseURL()
+    {
+        return "https://webhooks.rapidapi.com/api/get_token?user_id=";
+    }
+
+    /**
+     * Returns the base URL for websocket calls
+     *
+     * @return string
+     */
+    public static function websocketBaseURL()
+    {
+        return "wss://webhooks.rapidapi.com/socket/websocket?token=";
+    }
+
+    /**
      * Build a URL for a block call
      *
      * @param $pack {Package where the block is}
@@ -41,19 +78,7 @@ class RapidApiConnect
     {
         return static::getBaseUrl() . '/' . $pack . '/' . $block;
     }
-    
-    public static function callbackBaseURL()
-    {
-        //return "https://webhooks.imrapid.io";
-        return "https://webhooks.rapidapi.xyz";
-    }
 
-    public static function websocketBaseURL()
-    {
-        //return "wss://webhooks.imrapid.io";
-        return "wss://webhooks.rapidapi.xyz";
-    }
-  
     /**
      * Call a block
      *
@@ -94,68 +119,120 @@ class RapidApiConnect
         }
     }
 
-    public function listen($pack, $event, $args, $callbacks)
+    /**
+     * @param LoopInterface $loop
+     * @return mixed
+     */
+    public function connectionFactory(LoopInterface $loop)
     {
-        $user_id = "$pack.$event" . "_$this->project:$this->key";
-        $get_token_url = static::callbackBaseURL() . "/api/get_token?user_id=$user_id";
-        $httpInstance = new HttpInstance($get_token_url);
+        $connFactory = function () use ($loop) {
+            $connector = new Connector($loop);
+
+            return function ($token) use ($connector) {
+
+                return $connector(static::websocketBaseURL() . $token);
+            };
+        };
+
+        return $connFactory();
+    }
+
+    /**
+     * @param WebSocket $websocket
+     * @param LoopInterface $loop
+     * @param $args
+     * @return \React\Promise\Promise|\React\Promise\PromiseInterface
+     */
+    public function createListener(WebSocket $websocket, LoopInterface $loop, $args)
+    {
+        $token = substr($websocket->request->getUri()->getQuery(), 6);
+
+        $connect = [
+            "topic" => "users_socket:$this->pack.$this->event" . "_$this->project:$this->key",
+            "event" => "phx_join",
+            "ref" => "1",
+            "payload" => $args
+        ];
+
+        $heartbeat = [
+            "topic" => "phoenix",
+            "event" => "heartbeat",
+            "ref" => "1",
+            "payload" => []
+        ];
+
+        $deferred = new Deferred;
+
+        $websocket->on('message', function (MessageInterface $msg) use ($deferred, $websocket, $token) {
+
+            $message = json_decode($msg, true);
+
+            $deferred->notify($this->getNotify($message, $token));
+        });
+
+        $websocket->send(json_encode($connect, JSON_FORCE_OBJECT));
+
+        $loop->addPeriodicTimer(30, function () use ($websocket, $heartbeat) {
+
+            $websocket->send(json_encode($heartbeat, JSON_FORCE_OBJECT));
+        });
+
+        return $deferred->promise();
+    }
+
+    /**
+     * @param $pack
+     * @param $event
+     * @return string
+     */
+    public function getWebHookToken($pack, $event)
+    {
+        $this->pack = $pack;
+
+        $this->event = $event;
+
+        $httpInstance = new HttpInstance(static::callbackBaseURL() . $pack . $event . "_" . $this->project . ":" . $this->key);
+
         $httpInstance->setGetParameters($this->project, $this->key);
+
         try {
             $response = json_decode($httpInstance->getResponse(), true);
-            $token = $response['token'];
-            $socket_url = static::websocketBaseURL() . "/socket/websocket?token=$token";
-            $client = new Client($socket_url);
-            $connect = array(
-                "topic" => "users_socket:$user_id",
-                "event" => "phx_join",
-                "ref" => "1"
-            );
-            $connect["payload"] = $args;
-            $heartbeat = array(
-                "topic" => "phoenix",
-                "event" => "heartbeat",
-                "ref" => "1"
-            );
-            $heartbeat["payload"] = array();
-            $client->send(json_encode($connect));
-            $echo_time = time();
-            $interval = 30;
-            try {
-                while (1)
-                {
-                    $message = json_decode($client->receive(), true);
-                    if ($message["event"] == "joined" && is_callable($callbacks['onJoin'])) {
-                        call_user_func($callbacks['onJoin']);
-                    }                    
-                    if (substr($message["event"], 0, 4) != "phx_" && $message["payload"]["token"] == $token)
-                    {
-                        if (is_callable($callbacks['onMessage'])) {
-                            call_user_func($callbacks['onMessage'], $message["payload"]["body"]);
-                        }
-                    }
-                    if (!$message["payload"]["token"]) {
-                        if (is_callable($callbacks['onError'])) {
-                            call_user_func($callbacks['onError'], $message["payload"]["body"]);
-                        }
-                    }
-                    if ($echo_time + $interval >= time())
-                    {
-                        $client->send(json_encode($heartbeat, JSON_FORCE_OBJECT));
-                        $echo_time = time();
-                    }
-                }
-            } catch (ConnectionException $e) {
-                if (is_callable($callbacks['onClose'])) {
-                    call_user_func($callbacks['onClose'], $e);
-                }
-                exit;
-            }
+
+            return $response['token'];
         } catch (\RuntimeException $ex) {
-            if (is_callable($callbacks['onError'])) {
-                call_user_func($callbacks['onError'], $e);
-            }
-            return $ex;
+
+            return $this->createCallback("error", $ex);
         }
+    }
+
+    public function getNotify($message, $token)
+    {
+        if ($message["event"] == "joined") {
+
+            return $this->createCallback("join", $message);
+        } elseif ($message["event"] == "new_msg") {
+            if (!isset($message["payload"]["token"])) {
+
+                return $this->createCallback("error", $message["payload"]["body"]);
+            } elseif ($message["payload"]["token"] == $token) {
+
+                return $this->createCallback("message", $message["payload"]["body"]);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param $state
+     * @param $message
+     * @return string
+     */
+    public function createCallback($state, $message)
+    {
+        $callback[$state] = $message;
+
+        return json_encode($callback, JSON_UNESCAPED_SLASHES) . PHP_EOL;
     }
 
 }

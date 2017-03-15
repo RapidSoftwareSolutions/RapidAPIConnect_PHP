@@ -71,7 +71,7 @@ The printed result of `print_r($response)` will be:
 RapidAPI uses the [form-data](https://github.com/form-data/form-data) library by [@felixge](https://github.com/felixge) to handle files, so please refer to it for more information.
 
 ###Webhooks
-After setting up the webhook, you can listen to real-time events via websockets. You can listen multiple asynchronous webhook connections. Here the example of code, which listen asynchronously two different slack commands.
+After setting up the webhook, you can listen to real-time events via websockets. 
 
 ```
 require __DIR__ . "/vendor/autoload.php";
@@ -89,21 +89,7 @@ $webhook = $rapid->connectionFactory($loop);
 $webhook($rapid->getWebHookToken("Slack", "slashCommand"))
     ->then(function (WebSocket $websocket) use ($loop, $rapid) {
 
-        return $rapid->createListener($websocket, $loop, ["token" => "your_token_here", "command" => "/different_test"]);
-    }, function (\Exception $e) use ($loop, $rapid) {
-
-        echo $rapid->createCallback("close", $e->getMessage()) . PHP_EOL;
-    })
-    ->then(null, null, function ($notify) {
-
-        echo $notify;
-    });
-
-
-$webhook($rapid->getWebHookToken("Slack", "slashCommand"))
-    ->then(function (WebSocket $websocket) use ($loop, $rapid) {
-
-        return $rapid->createListener($websocket, $loop, ["token" => "your_token_here", "command" => "/send_test"]);
+        return $rapid->createListener($websocket, $loop, ["token" => "your_token_here", "command" => "/slash_command"]);
     }, function (\Exception $e) use ($loop, $rapid) {
 
         echo $rapid->createCallback("close", $e->getMessage()) . PHP_EOL;

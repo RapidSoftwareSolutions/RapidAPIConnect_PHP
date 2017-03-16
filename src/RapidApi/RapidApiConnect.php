@@ -148,7 +148,7 @@ class RapidApiConnect
         $token = substr($websocket->request->getUri()->getQuery(), 6);
 
         $connect = [
-            "topic" => "users_socket:$this->pack.$this->event" . "_$this->project:$this->key",
+            "topic" => "users_socket:$token",
             "event" => "phx_join",
             "ref" => "1",
             "payload" => $args
@@ -214,7 +214,7 @@ class RapidApiConnect
             if (!isset($message["payload"]["token"])) {
 
                 return $this->createCallback("error", $message["payload"]["body"]);
-            } elseif ($message["payload"]["token"] == $token) {
+            } else {
 
                 return $this->createCallback("message", $message["payload"]["body"]);
             }

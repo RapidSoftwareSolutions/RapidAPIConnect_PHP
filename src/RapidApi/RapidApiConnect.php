@@ -12,20 +12,6 @@ use React\Promise\Deferred;
 class RapidApiConnect
 {
     /**
-     * $pack {Package}
-     *
-     * @var String
-     */
-    private $pack;
-
-    /**
-     * $event {Webhook event}
-     *
-     * @var String
-     */
-    private $event;
-
-    /**
      * Creates a new RapidAPI Connect instance
      *
      * @param $project {Name of the project you are working with}
@@ -187,10 +173,6 @@ class RapidApiConnect
      */
     public function getWebHookToken($pack, $event)
     {
-        $this->pack = $pack;
-
-        $this->event = $event;
-
         $httpInstance = new HttpInstance(static::callbackBaseURL() . $pack . $event . "_" . $this->project . ":" . $this->key);
 
         $httpInstance->setGetParameters($this->project, $this->key);

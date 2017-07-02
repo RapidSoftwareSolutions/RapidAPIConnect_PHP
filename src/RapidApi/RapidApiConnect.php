@@ -54,7 +54,7 @@ class RapidApiConnect
      */
     public static function callbackBaseURL()
     {
-        return "https://webhooks.rapidapi.com/api/get_token?user_id=";
+        return "https://webhooks.rapidapi.io/api/get_token?user_id=";
     }
 
     /**
@@ -64,7 +64,7 @@ class RapidApiConnect
      */
     public static function websocketBaseURL()
     {
-        return "wss://webhooks.rapidapi.com/socket/websocket?token=";
+        return "wss://webhooks.rapidapi.io/socket/websocket?token=";
     }
 
     /**
